@@ -188,9 +188,9 @@ void create_mandelbrot_function(llvm::IRBuilder<> *builder, llvm::Module *module
   // GEP
   llvm::Value *gep_v = builder->CreateInBoundsGEP(result_v, tmp_v);
 
-  //builder->CreateStore(
-  //  builder->CreateCall(module->getValueSymbolTable().lookup("calc_mandelbrot"), arg_vec), gep_v
-  //);
+  builder->CreateStore(
+    builder->CreateCall(module->getValueSymbolTable().lookup("calc_mandelbrot"), arg_vec), gep_v
+  );
 
   builder->CreateRetVoid();
   return;
