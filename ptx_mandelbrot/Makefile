@@ -18,7 +18,7 @@ FLAGS = -g
 LIBS = -lncurses -lpthread -lz -lm -ldl 
 
 LLC = llc-37
-LL_FLAGS = -march=nvptx -mcpu=sm_20
+LL_FLAGS = -march=nvptx -mcpu=sm_30
 LL_NAME = kernel.ll
 KERNEL_OBJ = $(OBJ_DIR)/$(LL_NAME:.ll=.ptx)
 
@@ -29,7 +29,7 @@ all: $(MAKELL_SRC)
 	$(CC) $(FLAGS) $(MAKELL_SRC) -o $(MAKELL_OBJ)  `$(LLVM_CONFIG) $(LLVM_FLAGS)` $(LIBS) 
 	$(MAKELL_OBJ) $(LL_NAME)
 	$(LLC) $(LL_NAME) $(LL_FLAGS) -o $(KERNEL_OBJ)
-	$(CC) $(HOST_SRC) -o $(BIN) $(CUDA_FLAGS)
+#	$(CC) $(HOST_SRC) -o $(BIN) $(CUDA_FLAGS)
 
 run:
 	$(BIN)

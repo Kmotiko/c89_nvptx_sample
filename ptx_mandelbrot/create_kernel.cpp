@@ -366,7 +366,7 @@ int main(int argc, char **argv) {
       );
   llvm::Target const *target = llvm::TargetRegistry::lookupTarget(triple.getTriple(), err_str);
   llvm::TargetOptions options;
-  llvm::TargetMachine *target_machine = target->createTargetMachine(triple.getTriple(), "sm_20", "", options);
+  llvm::TargetMachine *target_machine = target->createTargetMachine(triple.getTriple(), "sm_30", "", options);
 
   // getDataLayout is deleted in LLVM 3.6 ?
   llvm::DataLayout data_layout = target_machine->createDataLayout();

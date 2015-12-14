@@ -21,7 +21,12 @@ void print_result(int *result){
 }
 
 void checkCudaErrors(CUresult err) {
-  assert(err == CUDA_SUCCESS);
+  const char *err_str;
+  if(err!=CUDA_SUCCESS){
+    cuGetErrorString(err, &err_str);
+    printf("%s\n", err_str);
+    exit(1);
+  }
 }
 
 int main(int argc, char **argv) {
@@ -45,8 +50,8 @@ int main(int argc, char **argv) {
   checkCudaErrors(cuDeviceComputeCapability(&devMajor, &devMinor, device));
   std::cout << "Device Compute Capability: "
             << devMajor << "." << devMinor << "\n";
-  if (devMajor < 2) {
-    std::cerr << "ERROR: Device 0 is not SM 2.0 or greater\n";
+  if (devMajor < 3) {
+    std::cerr << "ERROR: Device 0 is not SM 3.0 or greater\n";
     return 1;
   }
 
