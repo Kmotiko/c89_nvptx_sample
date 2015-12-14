@@ -2,7 +2,21 @@
 #include <fstream>
 #include <cassert>
 #include "cuda.h"
-#include "cutil.h"
+
+void checkCudaErrors(CUresult err) {
+  const char *err_str;
+  if(err!=CUDA_SUCCESS){
+    cuGetErrorString(err, &err_str);
+    printf("%s\n", err_str);
+    exit(1);
+  }
+}
+
+void print_result(int *result){
+  for(int i=0; i < 16; ++i){
+    printf("%d\n", result[i]);
+  }
+}
 
 int main(int argc, char **argv) {
   CUdevice    device;
@@ -13,20 +27,20 @@ int main(int argc, char **argv) {
   int         devCount;
 
   // CUDA initialization
-  CUDA_SAFE_CALL(cuInit(0));
-  CUDA_SAFE_CALL(cuDeviceGetCount(&devCount));
-  CUDA_SAFE_CALL(cuDeviceGet(&device, 0));
+  CUDA_CHECK_ERR(cuInit(0));
+  CUDA_CHECK_ERR(cuDeviceGetCount(&devCount));
+  CUDA_CHECK_ERR(cuDeviceGet(&device, 0));
 
   char name[128];
-  CUDA_SAFE_CALL(cuDeviceGetName(name, 128, device));
+  CUDA_CHECK_ERR(cuDeviceGetName(name, 128, device));
   std::cout << "Using CUDA Device [0]: " << name << "\n";
 
   int devMajor, devMinor;
-  CUDA_SAFE_CALL(cuDeviceComputeCapability(&devMajor, &devMinor, device));
+  CUDA_CHECK_ERR(cuDeviceComputeCapability(&devMajor, &devMinor, device));
   std::cout << "Device Compute Capability: "
             << devMajor << "." << devMinor << "\n";
-  if (devMajor < 2) {
-    std::cerr << "ERROR: Device 0 is not SM 2.0 or greater\n";
+  if (devMajor < 3) {
+    std::cerr << "ERROR: Device 0 is not SM 3.0 or greater\n";
     return 1;
   }
 
@@ -39,35 +53,35 @@ int main(int argc, char **argv) {
                     std::istreambuf_iterator<char>());
 
   // Create driver context
-  CUDA_SAFE_CALL(cuCtxCreate(&context, 0, device));
+  CUDA_CHECK_ERR(cuCtxCreate(&context, 0, device));
 
   // Create module for object
-  CUDA_SAFE_CALL(cuModuleLoadDataEx(&cudaModule, str.c_str(), 0, 0, 0));
+  CUDA_CHECK_ERR(cuModuleLoadDataEx(&cudaModule, str.c_str(), 0, 0, 0));
 
   // Get kernel function
-  CUDA_SAFE_CALL(cuModuleGetFunction(&function, cudaModule, "kernel"));
+  CUDA_CHECK_ERR(cuModuleGetFunction(&function, cudaModule, "kernel"));
 
   // Device data
   CUdeviceptr devResultBuffer;
 
-  CUDA_SAFE_CALL(cuMemAlloc(&devResultBuffer, sizeof(int)*16));
+  CUDA_CHECK_ERR(cuMemAlloc(&devResultBuffer, sizeof(float)*16));
 
-  int hostResult = new int[16];
+  float *hostResult = new float[16];
 
   // Populate input
-  for (unsigned i = 0; i != 16; ++i) {
-    hostResult[i] = 0;
+  for (int i = 0; i != 16; ++i) {
+    hostResult[i] = 0.0f;
   }
 
-  CUDA_SAFE_CALL(cuMemcpyHtoD(devResultBuffer, &hostResult[0], sizeof(int)*16));
+  CUDA_CHECK_ERR(cuMemcpyHtoD(devResultBuffer, &hostResult[0], sizeof(float)*16));
 
 
-  unsigned blockSizeX = 16;
-  unsigned blockSizeY = 1;
-  unsigned blockSizeZ = 1;
   unsigned gridSizeX  = 1;
   unsigned gridSizeY  = 1;
   unsigned gridSizeZ  = 1;
+  unsigned blockSizeX = 16;
+  unsigned blockSizeY = 1;
+  unsigned blockSizeZ = 1;
 
   // Kernel parameters
   void *KernelParams[] = { &devResultBuffer };
@@ -75,24 +89,24 @@ int main(int argc, char **argv) {
   std::cout << "Launching kernel\n";
 
   // Kernel launch
-  CUDA_SAFE_CALL(cuLaunchKernel(function, gridSizeX, gridSizeY, gridSizeZ,
+  CUDA_CHECK_ERR(cuLaunchKernel(function, gridSizeX, gridSizeY, gridSizeZ,
                                  blockSizeX, blockSizeY, blockSizeZ,
                                  0, NULL, KernelParams, NULL));
 
   // Retrieve device data
-  CUDA_SAFE_CALL(cuMemcpyDtoH(&hostResult[0], devResultBuffer, sizeof(int)*16));
+  CUDA_CHECK_ERR(cuMemcpyDtoH(&hostResult[0], devResultBuffer, sizeof(float)*16));
 
   std::cout << "Results:\n";
   print_result(hostResult);
 
 
   // Clean up after ourselves
-  delete [] hostResult;
+  delete[] hostResult;
 
   // Clean-up
-  CUDA_SAFE_CALL(cuMemFree(devResultBuffer));
-  CUDA_SAFE_CALL(cuModuleUnload(cudaModule));
-  CUDA_SAFE_CALL(cuCtxDestroy(context));
+  CUDA_CHECK_ERR(cuMemFree(devResultBuffer));
+  CUDA_CHECK_ERR(cuModuleUnload(cudaModule));
+  CUDA_CHECK_ERR(cuCtxDestroy(context));
 
   return 0;
 }
