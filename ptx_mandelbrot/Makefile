@@ -18,7 +18,7 @@ FLAGS = -g
 LIBS = -lncurses -lpthread -lz -lm -ldl 
 
 LLC = llc-37
-LL_FLAGS = -march=nvptx -mcpu=sm_30
+LL_FLAGS = -march=nvptx64 -mcpu=sm_30
 LL_NAME = kernel.ll
 KERNEL_OBJ = $(OBJ_DIR)/$(LL_NAME:.ll=.ptx)
 
