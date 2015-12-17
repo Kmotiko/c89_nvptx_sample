@@ -29,7 +29,7 @@ all: $(MAKELL_SRC)
 	$(CC) $(FLAGS) $(MAKELL_SRC) -o $(MAKELL_OBJ)  `$(LLVM_CONFIG) $(LLVM_FLAGS)` $(LIBS) 
 	$(MAKELL_OBJ) $(LL_NAME)
 	$(LLC) $(LL_NAME) $(LL_FLAGS) -o $(KERNEL_OBJ)
-#	$(CC) $(HOST_SRC) -o $(BIN) $(CUDA_FLAGS)
+	$(CC) $(HOST_SRC) -o $(BIN) $(CUDA_FLAGS)
 
 run:
 	$(BIN)
