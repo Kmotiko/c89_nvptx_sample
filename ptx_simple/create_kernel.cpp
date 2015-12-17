@@ -80,7 +80,11 @@ int main(int argc, char **argv) {
                                   llvm::sys::fs::OpenFlags::F_RW);
   llvm::IRBuilder<> *builder = new llvm::IRBuilder<>(llvm::getGlobalContext());
 
-  llvm::InitializeAllTargets();
+  LLVMInitializeNVPTXTargetInfo();
+  LLVMInitializeNVPTXTarget();
+  LLVMInitializeNVPTXTargetMC();
+  LLVMInitializeNVPTXAsmPrinter();
+  // or use llvm::InitializeAllTargets();
   std::string err_str;
   llvm::Triple triple(
       llvm::Triple::getArchTypeName(llvm::Triple::ArchType::nvptx64),
