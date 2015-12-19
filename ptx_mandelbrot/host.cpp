@@ -7,6 +7,16 @@
 #define WIDTH 800
 #define HEIGHT 640
 
+#define CUDA_CHECK_ERR(func){\
+  CUresult err = (func);\
+  const char *err_str;\
+  if(err!=CUDA_SUCCESS){\
+    cuGetErrorString(err, &err_str);\
+    printf("%s\n", err_str);\
+    return 1;\
+  }\
+}
+
 void print_result(int *result){
   for(int j = 0; j < HEIGHT; j+=10){
     for(int i = 0; i < WIDTH; i+=5){
@@ -20,15 +30,6 @@ void print_result(int *result){
   return;
 }
 
-void checkCudaErrors(CUresult err) {
-  const char *err_str;
-  if(err!=CUDA_SUCCESS){
-    cuGetErrorString(err, &err_str);
-    printf("%s\n", err_str);
-    exit(1);
-  }
-}
-
 int main(int argc, char **argv) {
   CUdevice    device;
   CUmodule    cudaModule;
@@ -38,16 +39,16 @@ int main(int argc, char **argv) {
   int         devCount;
 
   // CUDA initialization
-  checkCudaErrors(cuInit(0));
-  checkCudaErrors(cuDeviceGetCount(&devCount));
-  checkCudaErrors(cuDeviceGet(&device, 0));
+  CUDA_CHECL_ERR(cuInit(0));
+  CUDA_CHECL_ERR(cuDeviceGetCount(&devCount));
+  CUDA_CHECL_ERR(cuDeviceGet(&device, 0));
 
   char name[128];
-  checkCudaErrors(cuDeviceGetName(name, 128, device));
+  CUDA_CHECL_ERR(cuDeviceGetName(name, 128, device));
   std::cout << "Using CUDA Device [0]: " << name << "\n";
 
   int devMajor, devMinor;
-  checkCudaErrors(cuDeviceComputeCapability(&devMajor, &devMinor, device));
+  CUDA_CHECL_ERR(cuDeviceComputeCapability(&devMajor, &devMinor, device));
   std::cout << "Device Compute Capability: "
             << devMajor << "." << devMinor << "\n";
   if (devMajor < 3) {
@@ -64,18 +65,18 @@ int main(int argc, char **argv) {
                     std::istreambuf_iterator<char>());
 
   // create driver context
-  checkCudaErrors(cuCtxCreate(&context, 0, device));
+  CUDA_CHECL_ERR(cuCtxCreate(&context, 0, device));
 
   // create module for object
-  checkCudaErrors(cuModuleLoadDataEx(&cudaModule, str.c_str(), 0, 0, 0));
+  CUDA_CHECL_ERR(cuModuleLoadDataEx(&cudaModule, str.c_str(), 0, 0, 0));
 
   // get kernel function
-  checkCudaErrors(cuModuleGetFunction(&function, cudaModule, "mandelbrot"));
+  CUDA_CHECL_ERR(cuModuleGetFunction(&function, cudaModule, "mandelbrot"));
 
   // device data
   CUdeviceptr devResultBuffer;
 
-  checkCudaErrors(cuMemAlloc(&devResultBuffer, sizeof(int)*WIDTH*HEIGHT));
+  CUDA_CHECL_ERR(cuMemAlloc(&devResultBuffer, sizeof(int)*WIDTH*HEIGHT));
 
   int hostResult = new int[WIDTH*HEIGHT];
 
@@ -83,7 +84,7 @@ int main(int argc, char **argv) {
     hostResult[i] = 0;
   }
 
-  checkCudaErrors(cuMemcpyHtoD(devResultBuffer, &hostResult[0], sizeof(int)*WIDTH*HEIGHT));
+  CUDA_CHECL_ERR(cuMemcpyHtoD(devResultBuffer, &hostResult[0], sizeof(int)*WIDTH*HEIGHT));
 
 
   // size of grid/block/thread
@@ -98,19 +99,19 @@ int main(int argc, char **argv) {
   void *KernelParams[] = { &devResultBuffer };
 
   // launch kernel code
-  checkCudaErrors(cuLaunchKernel(function, gridSizeX, gridSizeY, gridSizeZ,
+  CUDA_CHECL_ERR(cuLaunchKernel(function, gridSizeX, gridSizeY, gridSizeZ,
                                  blockSizeX, blockSizeY, blockSizeZ,
                                  0, NULL, KernelParams, NULL));
 
-  checkCudaErrors(cuMemcpyDtoH(&hostResult[0], devResultBuffer, sizeof(int)*WIDTH*HEIGHT));
+  CUDA_CHECL_ERR(cuMemcpyDtoH(&hostResult[0], devResultBuffer, sizeof(int)*WIDTH*HEIGHT));
 
   print_result(hostResult);
 
   // Clean-up
   delete [] hostResult;
-  checkCudaErrors(cuMemFree(devResultBuffer));
-  checkCudaErrors(cuModuleUnload(cudaModule));
-  checkCudaErrors(cuCtxDestroy(context));
+  CUDA_CHECL_ERR(cuMemFree(devResultBuffer));
+  CUDA_CHECL_ERR(cuModuleUnload(cudaModule));
+  CUDA_CHECL_ERR(cuCtxDestroy(context));
 
   return 0;
 }
