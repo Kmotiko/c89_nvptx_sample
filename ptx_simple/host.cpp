@@ -1,20 +1,22 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <cuda_runtime.h>
 #include "cuda.h"
 
-void checkCudaErrors(CUresult err) {
-  const char *err_str;
-  if(err!=CUDA_SUCCESS){
-    cuGetErrorString(err, &err_str);
-    printf("%s\n", err_str);
-    exit(1);
-  }
+#define CUDA_CHECK_ERR(func){\
+  CUresult err = (func);\
+  const char *err_str;\
+  if(err!=CUDA_SUCCESS){\
+    cuGetErrorString(err, &err_str);\
+    printf("%s\n", err_str);\
+    return 1;\
+  }\
 }
 
-void print_result(int *result){
+void print_result(float *result){
   for(int i=0; i < 16; ++i){
-    printf("%d\n", result[i]);
+    printf("%f\n", result[i]);
   }
 }
 
