@@ -1,4 +1,4 @@
-CC = clang++-37
+CC = clang++-3.7
 MAKELL_SRC = create_kernel.cpp
 
 BIN_DIR = bin
@@ -12,12 +12,12 @@ CUDA_FLAGS = -O2 -g $(CUDA_INC_FLAGS) $(CUDA_LIBS)
 BIN = $(BIN_DIR)/$(HOST_SRC:.cpp=.o)
 
 
-LLVM_CONFIG = llvm-config-37
+LLVM_CONFIG = llvm-config-3.7
 LLVM_FLAGS = --cxxflags --ldflags --libs
 FLAGS = -g
 LIBS = -lncurses -lpthread -lz -lm -ldl 
 
-LLC = llc-37
+LLC = llc-3.7
 LL_FLAGS = -march=nvptx64 -mcpu=sm_30
 LL_NAME = kernel.ll
 KERNEL_OBJ = $(OBJ_DIR)/$(LL_NAME:.ll=.ptx)

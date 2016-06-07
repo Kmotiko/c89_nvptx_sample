@@ -39,16 +39,16 @@ int main(int argc, char **argv) {
   int         devCount;
 
   // CUDA initialization
-  CUDA_CHECL_ERR(cuInit(0));
-  CUDA_CHECL_ERR(cuDeviceGetCount(&devCount));
-  CUDA_CHECL_ERR(cuDeviceGet(&device, 0));
+  CUDA_CHECK_ERR(cuInit(0));
+  CUDA_CHECK_ERR(cuDeviceGetCount(&devCount));
+  CUDA_CHECK_ERR(cuDeviceGet(&device, 0));
 
   char name[128];
-  CUDA_CHECL_ERR(cuDeviceGetName(name, 128, device));
+  CUDA_CHECK_ERR(cuDeviceGetName(name, 128, device));
   std::cout << "Using CUDA Device [0]: " << name << "\n";
 
   int devMajor, devMinor;
-  CUDA_CHECL_ERR(cuDeviceComputeCapability(&devMajor, &devMinor, device));
+  CUDA_CHECK_ERR(cuDeviceComputeCapability(&devMajor, &devMinor, device));
   std::cout << "Device Compute Capability: "
             << devMajor << "." << devMinor << "\n";
   if (devMajor < 3) {
@@ -65,18 +65,18 @@ int main(int argc, char **argv) {
                     std::istreambuf_iterator<char>());
 
   // create driver context
-  CUDA_CHECL_ERR(cuCtxCreate(&context, 0, device));
+  CUDA_CHECK_ERR(cuCtxCreate(&context, 0, device));
 
   // create module for object
-  CUDA_CHECL_ERR(cuModuleLoadDataEx(&cudaModule, str.c_str(), 0, 0, 0));
+  CUDA_CHECK_ERR(cuModuleLoadDataEx(&cudaModule, str.c_str(), 0, 0, 0));
 
   // get kernel function
-  CUDA_CHECL_ERR(cuModuleGetFunction(&function, cudaModule, "mandelbrot"));
+  CUDA_CHECK_ERR(cuModuleGetFunction(&function, cudaModule, "mandelbrot"));
 
   // device data
   CUdeviceptr devResultBuffer;
 
-  CUDA_CHECL_ERR(cuMemAlloc(&devResultBuffer, sizeof(int)*WIDTH*HEIGHT));
+  CUDA_CHECK_ERR(cuMemAlloc(&devResultBuffer, sizeof(int)*WIDTH*HEIGHT));
 
   int hostResult = new int[WIDTH*HEIGHT];
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     hostResult[i] = 0;
   }
 
-  CUDA_CHECL_ERR(cuMemcpyHtoD(devResultBuffer, &hostResult[0], sizeof(int)*WIDTH*HEIGHT));
+  CUDA_CHECK_ERR(cuMemcpyHtoD(devResultBuffer, &hostResult[0], sizeof(int)*WIDTH*HEIGHT));
 
 
   // size of grid/block/thread
@@ -99,19 +99,19 @@ int main(int argc, char **argv) {
   void *KernelParams[] = { &devResultBuffer };
 
   // launch kernel code
-  CUDA_CHECL_ERR(cuLaunchKernel(function, gridSizeX, gridSizeY, gridSizeZ,
+  CUDA_CHECK_ERR(cuLaunchKernel(function, gridSizeX, gridSizeY, gridSizeZ,
                                  blockSizeX, blockSizeY, blockSizeZ,
                                  0, NULL, KernelParams, NULL));
 
-  CUDA_CHECL_ERR(cuMemcpyDtoH(&hostResult[0], devResultBuffer, sizeof(int)*WIDTH*HEIGHT));
+  CUDA_CHECK_ERR(cuMemcpyDtoH(&hostResult[0], devResultBuffer, sizeof(int)*WIDTH*HEIGHT));
 
   print_result(hostResult);
 
   // Clean-up
   delete [] hostResult;
-  CUDA_CHECL_ERR(cuMemFree(devResultBuffer));
-  CUDA_CHECL_ERR(cuModuleUnload(cudaModule));
-  CUDA_CHECL_ERR(cuCtxDestroy(context));
+  CUDA_CHECK_ERR(cuMemFree(devResultBuffer));
+  CUDA_CHECK_ERR(cuModuleUnload(cudaModule));
+  CUDA_CHECK_ERR(cuCtxDestroy(context));
 
   return 0;
 }
